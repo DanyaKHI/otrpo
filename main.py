@@ -73,20 +73,10 @@ def get_pokemon(pokemon_id):
         })
     else:
         pokemon.name = bytes(rd.hget('poke' + str(pokemon_id), 'name')).decode("utf-8")
-        print(pokemon.name)
-        print(type(pokemon.name))
         pokemon.picture = bytes(rd.hget('poke' + str(pokemon_id), 'picture')).decode("utf-8")
-        print(pokemon.picture)
-        print(type(pokemon.picture))
         pokemon.abils = bytes(rd.hget('poke' + str(pokemon_id), 'abils')).decode("utf-8").split('/')
-        print(pokemon.abils)
-        print(type(pokemon.abils))
         pokemon.attack = int(rd.hget('poke' + str(pokemon_id), 'attack'))
-        print(pokemon.attack)
-        print(type(pokemon.attack))
         pokemon.hp = int(rd.hget('poke' + str(pokemon_id), 'hp'))
-        print(pokemon.hp)
-        print(type(pokemon.hp))
     return jsonify(pokemon.__dict__)
 
 
