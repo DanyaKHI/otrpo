@@ -11,11 +11,12 @@ from sendToMail import send_letter
 from ftplib import FTP
 import os
 from dotenv import load_dotenv
+import redis
 
 app = Flask(__name__)
 CORS(app)
+rd = redis.Redis()
 load_dotenv()
-
 
 engine = create_engine(os.getenv("DB_STRING"))
 Session = sessionmaker(bind=engine)
@@ -54,14 +55,38 @@ def get_pokemons_count():
 
 @app.route('/poke/api/pokemon/<int:pokemon_id>', methods=['GET'])
 def get_pokemon(pokemon_id):
-    r = requests.get('https://pokeapi.co/api/v2/pokemon/' + str(pokemon_id) + '/')
     pokemon = Pokemon()
     pokemon.id = pokemon_id
-    pokemon.name = r.json()['name']
-    pokemon.picture = r.json()['sprites']['front_default']
-    pokemon.abils = [i['ability']['name'] for i in r.json()['abilities'][:5]]
-    pokemon.attack = r.json()['stats'][0]['base_stat']
-    pokemon.hp = r.json()['stats'][1]['base_stat']
+    if not rd.hgetall("poke" + str(pokemon_id)):
+        r = requests.get('https://pokeapi.co/api/v2/pokemon/' + str(pokemon_id) + '/')
+        pokemon.name = r.json()['name']
+        pokemon.picture = r.json()['sprites']['front_default']
+        pokemon.abils = [i['ability']['name'] for i in r.json()['abilities'][:5]]
+        pokemon.attack = r.json()['stats'][0]['base_stat']
+        pokemon.hp = r.json()['stats'][1]['base_stat']
+        rd.hset("poke" + str(pokemon_id), mapping={
+            'name': pokemon.name,
+            'picture': pokemon.picture,
+            'abils': '/'.join(pokemon.abils),
+            'attack': pokemon.attack,
+            'hp': pokemon.hp
+        })
+    else:
+        pokemon.name = bytes(rd.hget('poke' + str(pokemon_id), 'name')).decode("utf-8")
+        print(pokemon.name)
+        print(type(pokemon.name))
+        pokemon.picture = bytes(rd.hget('poke' + str(pokemon_id), 'picture')).decode("utf-8")
+        print(pokemon.picture)
+        print(type(pokemon.picture))
+        pokemon.abils = bytes(rd.hget('poke' + str(pokemon_id), 'abils')).decode("utf-8").split('/')
+        print(pokemon.abils)
+        print(type(pokemon.abils))
+        pokemon.attack = int(rd.hget('poke' + str(pokemon_id), 'attack'))
+        print(pokemon.attack)
+        print(type(pokemon.attack))
+        pokemon.hp = int(rd.hget('poke' + str(pokemon_id), 'hp'))
+        print(pokemon.hp)
+        print(type(pokemon.hp))
     return jsonify(pokemon.__dict__)
 
 
@@ -162,8 +187,8 @@ def to_ftp():
         ftp.cwd(current_date)
         with open('file.md', 'w+') as file:
             file.write('# ' + name)
-            file.write('\nablis: '+str(abils))
-        new = current_time+'.md'
+            file.write('\nablis: ' + str(abils))
+        new = current_time + '.md'
         with open('file.md', 'rb') as file:
             ftp.storbinary(f"STOR {new}", file)
     return jsonify(True)
