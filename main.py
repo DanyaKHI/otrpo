@@ -69,8 +69,9 @@ def get_pokemon(pokemon_id):
             'picture': pokemon.picture,
             'abils': '/'.join(pokemon.abils),
             'attack': pokemon.attack,
-            'hp': pokemon.hp
+            'hp': pokemon.hp,
         })
+        rd.expire("poke" + str(pokemon_id), 3600)
     else:
         pokemon.name = bytes(rd.hget('poke' + str(pokemon_id), 'name')).decode("utf-8")
         pokemon.picture = bytes(rd.hget('poke' + str(pokemon_id), 'picture')).decode("utf-8")
