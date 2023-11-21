@@ -6,7 +6,6 @@ import random
 from sqlalchemy import create_engine, types, Column
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
-import psycopg2
 from sendToMail import send_letter
 from ftplib import FTP
 import os
