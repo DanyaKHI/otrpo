@@ -14,7 +14,7 @@ import redis
 
 app = Flask(__name__)
 CORS(app)
-rd = redis.Redis()
+rd = redis.Redis(host="host.docker.internal",port=6379)
 load_dotenv()
 
 engine = create_engine(os.getenv("DB_STRING"))
@@ -182,3 +182,7 @@ def to_ftp():
         with open('file.md', 'rb') as file:
             ftp.storbinary(f"STOR {new}", file)
     return jsonify(True)
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host='0.0.0.0', port=5000)
